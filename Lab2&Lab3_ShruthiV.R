@@ -172,6 +172,8 @@ print(full.frame)  # Print full data frame
 reduced.frame <- full.frame[!is.na(full.frame$c1), ]  # Remove rows where c1 is NA
 print("Reduced Frame:")  # Print header
 print(reduced.frame)  # Print reduced data frame
+complete.frame = full.frame[ complete.cases(full.frame), ]
+
 x <- mean(c1, na.rm = TRUE)  # Calculate mean of c1 ignoring NAs
 print("Mean of c1 in reduced frame:")  # Print header
 print(x)  # Print mean of c1
