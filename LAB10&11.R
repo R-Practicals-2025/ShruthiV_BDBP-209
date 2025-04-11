@@ -176,44 +176,48 @@ n <- 100 ; p <- 0.5 ; np <- n*p
 sigma_bin <- sqrt(np *(1-p))
 m <- rbinom(10000, n, p)
 W <- (m-np)/sigma_bin
-hist(W, probability=TRUE, col="lightgray", main="Normalized Binomial Distribution", xlab="W", ylab="Density")
+hist(W, probability=TRUE, col="lightgray", main="Normalized Binomial Distribution", xlab="W", ylab="Density",breaks=40)
 x_range <- seq(-1, 1, length = 100)  
 curve(dnorm(x, mean=0, sd=1), col="blue", lwd=2, add=TRUE)
 
 #g
-# Set up a 2x2 plotting grid
-par(mfrow=c(2,2))
+# Setup 2x2 plotting grid
+par(mfrow = c(2, 2), mar=c(4, 4, 3, 1))
 
-# Lambda values to test
+# Lambda values to compare
 lambdas <- c(1, 10, 100, 1000)
 
-# Loop through each lambda
 for (lambda in lambdas) {
-  
-  # Define x range: from around (λ - 4√λ) to (λ + 4√λ)
+  # x range around lambda ± 4*sqrt(lambda)
   x_min <- max(0, floor(lambda - 4 * sqrt(lambda)))
   x_max <- ceiling(lambda + 4 * sqrt(lambda))
   x_vals <- x_min:x_max
   
-  # Compute Poisson PMF values
+  # Poisson probabilities
   poisson_probs <- dpois(x_vals, lambda)
   
-  # Plot Poisson PMF
-  plot(x_vals, poisson_probs, type="h", lwd=2, col="darkgreen",
-       main=paste("Poisson vs Normal (λ =", lambda, ")"),
-       xlab="x", ylab="Probability")
+  # Convert x to Z-scores
+  z_vals <- (x_vals - lambda) / sqrt(lambda)
   
-  # Compute Normal approximation (same mean & SD as Poisson)
-  x_smooth <- seq(x_min, x_max, length=500)
-  normal_approx <- dnorm(x_smooth, mean=lambda, sd=sqrt(lambda))
+  # Standard normal curve
+  z_smooth <- seq(min(z_vals), max(z_vals), length.out = 500)
+  normal_pdf <- dnorm(z_smooth)
   
-  # Overlay Normal curve
-  lines(x_smooth, normal_approx, col="red", lwd=2)
+  # Plot Poisson probabilities in Z-space
+  plot(z_vals, poisson_probs, type = "h", lwd = 2, col = "darkgreen",
+       main = paste("Poisson vs Standard Normal (λ =", lambda, ")"),
+       xlab = "Z = (x - λ)/√λ", ylab = "Probability",
+       ylim = c(0, max(c(poisson_probs, normal_pdf)) * 1.1))
   
-  # Add legend
-  legend("topright", legend=c("Poisson", "Normal Approx"), col=c("darkgreen", "red"), lty=1, lwd=2, bty="n")
+  # Overlay standard normal curve
+  lines(z_smooth, normal_pdf, col = "red", lwd = 2)
   
+  # Legend
+  legend("topright", legend = c("Poisson (Z)", "Standard Normal"),
+         col = c("darkgreen", "red"), lty = c(1, 1), lwd = 2, bty = "n")
 }
+
+
 
 #h
 library(MASS) #contains mvrnorm-multivariate normal random sampling
@@ -256,22 +260,218 @@ print(b)
 c <- runif(10000, min = 1, max = 2)
 # Plot histogram
 hist(c,
-     breaks = 50,            
+     breaks = 20,            
      col = "skyblue",
      xlim = c(1, 2),          # Set x-axis limits from 1 to 2
      main = "Histogram of Uniform(1,2)",
      xlab = "Value")
 
-pa
+#Q8
+# (a) Density at x = 3, λ = 2
+x <- 3
+lambda <- 2
+density_val <- dexp(x, rate = lambda)
+print(paste("Density at x =", x, "with λ =", lambda, "is", density_val))
+
+#(b) Quantile at CDF = 0.995 for λ = 2
+quantile_val <- qexp(0.995, rate = lambda)
+print(paste("Quantile at 0.995 CDF for λ =", lambda, "is", quantile_val))
+
+#c
+# X-axis range
+x_vals <- seq(0, 1, length.out = 1000)
+
+# Plot CDF for λ = 2
+plot(x_vals, pexp(x_vals, rate = 2), type = "l", col = "blue", lwd = 2,
+     main = "Exponential CDFs for Different λ",
+     xlab = "x", ylab = "Cumulative Probability", ylim = c(0,1))
+
+# Add λ = 10
+lines(x_vals, pexp(x_vals, rate = 10), col = "red", lwd = 2)
+
+# Add λ = 100
+lines(x_vals, pexp(x_vals, rate = 100), col = "darkgreen", lwd = 2)
+
+# Add legend
+legend("bottomright", legend = c("λ = 2", "λ = 10", "λ = 100"),
+       col = c("blue", "red", "darkgreen"), lwd = 2)
+
+#d 
+set.seed(42)  # Optional for reproducibility
+rexp(4, rate = 3)
+
+#Q9
+#a
+# Set up a 1x2 plotting grid
+par(mfrow=c(1,2))
+
+# Plot 1: Vary alpha, fix theta = 4
+curve(dgamma(x, shape=1, scale=4), from=0, to=50, col="black", lwd=2, ylab="Density", main="Varying α, θ=4")
+curve(dgamma(x, shape=2, scale=4), add=TRUE, col="blue", lwd=2)
+curve(dgamma(x, shape=3, scale=4), add=TRUE, col="red", lwd=2)
+curve(dgamma(x, shape=4, scale=4), add=TRUE, col="magenta", lwd=2)
+legend("topright", legend=c("α=1", "α=2", "α=3", "α=4"), col=c("black", "blue", "red", "magenta"), lwd=2)
+
+# Plot 2: Vary theta, fix alpha = 4
+curve(dgamma(x, shape=4, scale=1), from=0, to=50, col="black", lwd=2, ylab="Density", main="Varying θ, α=4")
+curve(dgamma(x, shape=4, scale=2), add=TRUE, col="blue", lwd=2)
+curve(dgamma(x, shape=4, scale=3), add=TRUE, col="red", lwd=2)
+curve(dgamma(x, shape=4, scale=4), add=TRUE, col="magenta", lwd=2)
+legend("topright", legend=c("θ=1", "θ=2", "θ=3", "θ=4"), col=c("black", "blue", "red", "magenta"), lwd=2)
+
+#b
+dgamma(6, shape=4, scale=1)
+
+#c
+pgamma(6, shape=4, scale=1)
+
+#d
+qgamma(0.95, shape=4, scale=1)
+
+#e
+set.seed(123)  # For reproducibility
+samples <- rgamma(10000, shape=4, scale=1)
+hist(samples, breaks=50, main="Histogram of Gamma(α=4, θ=1)", xlab="x", col="lightblue", border="black")
 
 
+#Q10
+#a
+# Plot multiple chi-square PDFs on one graph
+curve(dchisq(x, df=2), from=0, to=25, col="black", lwd=2, ylab="Density", main="Chi-square PDFs")
+curve(dchisq(x, df=3), add=TRUE, col="blue", lwd=2)
+curve(dchisq(x, df=5), add=TRUE, col="red", lwd=2)
+curve(dchisq(x, df=10), add=TRUE, col="green", lwd=2)
+legend("topright", legend=c("df=2", "df=3", "df=5", "df=10"), col=c("black", "blue", "red", "green"), lwd=2)
+
+#b
+dchisq(6, df=5)
+
+#c
+pchisq(6, df=10)
+
+#d
+qchisq(0.85, df=6)
+
+#e
+set.seed(123)
+data <- rchisq(10000, df=6)
+hist(data, breaks=30, col="lightblue", border="black", main="Histogram of χ², df=6", xlab="x")
+text(20, 1200, "r=6", cex=1.5)  
+
+#f
+mu <- 2
+sigma <- 1
+x <- seq(0, 5, length=100)
+Z2 <- ((x - mu)^2) / (sigma^2)
+
+# Plot chi-square with df = 1
+curve(dchisq(x, df=1), from=0, to=10, col="purple", lwd=2, main="χ² PDF with df = 1", ylab="Density")
 
 
+###part 3- CENTRAL LIMIT THEOREM
+#Q1
+set.seed(123)
+
+# (i) Generate 10,000 samples of size 5 from Uniform[0,10]
+samples <- matrix(runif(10000 * 5, min = 0, max = 10), ncol = 5)
+sample_means <- rowMeans(samples)
+
+# (ii) Plot histogram to get bin width info
+hist_out <- hist(sample_means, breaks = 50, col = "lightblue", 
+                 main = "CLT: Uniform[0,10] Sample Means", xlab = "Sample Mean")
+
+# (ii continued) Print mean and standard deviation
+mean_sample <- mean(sample_means)
+sd_sample <- sd(sample_means)
+print(paste("Mean of sample means:", mean_sample))
+print(paste("Standard deviation of sample means:", sd_sample))
+
+# (iii) Create x values and compute normal PDF
+x_vals <- seq(min(sample_means), max(sample_means), length.out = 100)
+normal_pdf <- dnorm(x_vals, mean = mean_sample, sd = sd_sample)
+
+# (iv) Scale using actual bin width
+bin_width <- hist_out$breaks[2] - hist_out$breaks[1]
+scaled_pdf <- normal_pdf * length(sample_means) * bin_width
+
+# (v) Plot histogram and overlay correct normal curve
+hist(sample_means, breaks = 50, col = "lightblue", 
+     main = "CLT: Uniform[0,10] Sample Means", xlab = "Sample Mean", freq = TRUE)
+lines(x_vals, scaled_pdf, col = "red", lwd = 2)
+legend("topright", legend = c("Sample Means", "Normal Curve"), 
+       col = c("lightblue", "red"), lwd = 2, fill = c("lightblue", NA))
+
+#Q2
+# (i) Single die roll – Uniform distribution
+a <- sample(1:6, replace = TRUE, 10000)
+hist(a,
+     breaks = seq(0.5, 6.5, by = 1),
+     col = "skyblue",
+     main = "Single Die Roll (Uniform)",
+     xlab = "Dice Value")
+
+# (ii) Sum of two dice – Triangular distribution
+b <- sample(1:6, replace = TRUE, 10000)
+ab_sum <- a + b
+hist(ab_sum,
+     breaks = seq(1.5, 12.5, by = 1),
+     col = "lightgreen",
+     main = "Sum of Two Dice",
+     xlab = "Sum")
+
+# (iii) Sum of three dice – Bell starts to appear
+c <- sample(1:6, replace = TRUE, 10000)
+abc_sum <- a + b + c
+hist(abc_sum,
+     breaks = seq(2.5, 18.5, by = 1),
+     col = "lightcoral",
+     main = "Sum of Three Dice",
+     xlab = "Sum")
 
 
+# (iv) Sum of five dice – Nearly normal
+d <- sample(1:6, replace = TRUE, 10000)
+e <- sample(1:6, replace = TRUE, 10000)
+abcde_sum <- a + b + c + d + e
+
+# Plot histogram
+hist(abcde_sum,
+     breaks = seq(4.5, 30.5, by = 1),
+     col = "orchid",
+     main = "Sum of Five Dice",
+     xlab = "Sum")
+
+mu <- mean(abcde_sum)
+sigma <- sd(abcde_sum)
+x_vals <- seq(min(abcde_sum), max(abcde_sum), by = 0.1)
+normal_pdf <- dnorm(x_vals, mean = mu, sd = sigma)
+
+# Scale normal curve to match histogram (bin width = 1, so scale = 10000 * 1 = 10000)
+lines(x_vals, normal_pdf * 10000, col = "darkblue", lwd = 2)
 
 
+# Load necessary package
+library(pROC)
 
+# Step 1: Read the white wine data
+white_wine <- read.csv("winequality-white.csv", sep=";")
 
+# Step 2: Create binary columns for thresholds 6 to 10
+thresholds <- 6:10
+for (t in thresholds) {
+  col_name <- paste0("quality_", t)
+  white_wine[[col_name]] <- ifelse(white_wine$quality >= t, 1, 0)
+}
+# Step 3: Plot ROC curves for each threshold
+colors <- c("red", "blue", "green", "purple", "orange")
+plot(NULL, xlim=c(1, 0), ylim=c(0, 1), xlab="1 - Specificity", ylab="Sensitivity", main="ROC Curves for Different Thresholds")
+abline(a=0, b=1, lwd=2, lty=2)  # identity line
 
+for (i in 1:length(thresholds)) {
+  t <- thresholds[i]
+  response <- white_wine[[paste0("quality_", t)]]
+  roc_obj <- roc(response, white_wine$alcohol, legacy.axes=TRUE, ci=TRUE)
+  plot(roc_obj, col=colors[i], add=TRUE, print.auc=TRUE, print.thres=TRUE)
+}
 
+legend("bottomright", legend=paste("Threshold >=", thresholds), col=colors, lwd=2)
